@@ -6,8 +6,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
-import kotlin.Long.Companion.MAX_VALUE
-import kotlin.Long.Companion.MIN_VALUE
 import kotlin.math.*
 
 
@@ -48,9 +46,10 @@ class Accelerometer : Activity(), SensorEventListener {
     private var prevAccTime : Long = 0L
 
     // this is the time to which the array and prev values are being updated
-    var calcTime : Long = 0L
+    private var calcTime : Long = 0L
 
-    private val ACCELEROMETER_TIME_DELTA_MS : Long = 20L // calculations are expected every 20 milliseconds
+    // val ACCELEROMETER_TIME_DELTA_MS : Long = 20L // calculations are expected every 20 milliseconds
+    // val NUMBER_CONSECUTIVE_SAMPLES_TRG : Int = 5
 
     override fun onSensorChanged(event: SensorEvent) {
         if(event.sensor?.type == Sensor.TYPE_LINEAR_ACCELERATION){
@@ -71,7 +70,7 @@ class Accelerometer : Activity(), SensorEventListener {
         // the first time, we don't change the arrays, but only set the "prevAcc..." values !
         // all the other times, we expand the arrays properly
         if(prevAccTime == 0L){
-            calcTime = newAccTime + ACCELEROMETER_TIME_DELTA_MS
+            calcTime = newAccTime + Constants.ACCELEROMETER_TIME_DELTA_MS
         }else{
             // update the queues linearly using the newly acquired sample
             // at every step, check if any trigger should be triggered
@@ -82,15 +81,8 @@ class Accelerometer : Activity(), SensorEventListener {
                 accArrX.addFirst(interimAccX)
                 accArrX.addFirst(interimAccY)
                 accArrX.addFirst(interimAccZ)
-                try{
-                    assert(accArrX.size == accArrY.size)
-                    assert(accArrX.size == accArrZ.size)
-                }
-                catch (err: AssertionError){
-                    println(err.message)
-                }
                 // assert(accArrX.size == accArrY.size && accArrX.size== accArrZ.size )
-                calcTime += ACCELEROMETER_TIME_DELTA_MS
+                calcTime += Constants.ACCELEROMETER_TIME_DELTA_MS
                 checkTriggers()
             }
         }
@@ -103,9 +95,41 @@ class Accelerometer : Activity(), SensorEventListener {
 
     private fun checkTriggers() {
         // need to pop things from queue
-        // need to update average
+        val arrLenX = accArrX.size
+        val arrLenY = accArrY.size
+        val arrLenZ = accArrZ.size
+        try{
+            assert(arrLenX == arrLenY)
+            assert(arrLenX == arrLenZ)
+        }
+        catch (err: AssertionError){
+            println(err.message)
+        }
+        // val justPoppedAccX: Double? = popLastUntilLen(accArrX, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
+        // val justPoppedAccY: Double? = popLastUntilLen(accArrY, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
+        // val justPoppedAccZ: Double? = popLastUntilLen(accArrZ, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
+        popLastUntilLen(accArrX, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
+        popLastUntilLen(accArrY, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
+        popLastUntilLen(accArrZ, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
+
+        // TODO
         // if needed, trigger events.
+        val triggerEvaluator = StatusDetector(
+            accArrX,
+            accArrY,
+            accArrZ
+        )
+        val evaluationResult : Constants.FallState = triggerEvaluator.evaluate()
+        print(evaluationResult)
         return
+    }
+
+    private fun popLastUntilLen( trgArr:ArrayDeque<Double>, maxLen:Int) : Double?{
+        var defaultRet : Double? = 0.0
+        while(trgArr.size > maxLen){
+            defaultRet = trgArr.removeLastOrNull()
+        }
+        return defaultRet
     }
 
     private fun linearize( prevTime:Long, prevValue:Double, newTime:Long, newValue:Double, trgTime:Long): Double{
@@ -120,9 +144,9 @@ class Accelerometer : Activity(), SensorEventListener {
         // //               -> == { oV(nT-oT) + nVtT-oVtT -nVoT + oVoT } / (nT-oT)
         // //               -> == oV + (nV-oV)(tT-oT)/(nT-oT)
         // val deltaTime : newTime-prevTime
-        val delta_newT_oldT : Double = timeDiffs(prevTime, newTime).toDouble()
-        val delta_trgT_oldT : Double = timeDiffs(prevTime, trgTime).toDouble()
-        return prevTime + (newValue - prevValue)*(delta_trgT_oldT)/(delta_newT_oldT)
+        val deltaNewTimOldTim : Double = timeDiffs(prevTime, newTime).toDouble()
+        val deltaTrgTimOldTim : Double = timeDiffs(prevTime, trgTime).toDouble()
+        return prevTime + (newValue - prevValue)*(deltaTrgTimOldTim)/(deltaNewTimOldTim)
     }
 
     @Throws(Exception::class)
@@ -132,18 +156,26 @@ class Accelerometer : Activity(), SensorEventListener {
             return recentTime-ancientTime
         }else{
             // // newTime(negative) - minTime( -2^-63) + maxTime(2^63 -1) - prevTime(positive)
+            // in order to be able to calculate this, we need to pack differently
+            // { newTime(negative) + maxTime(positive } - { minTime(negative) + prevTime(positive) }
             try{
                 assert(recentTime < 0L)
+                assert(Constants.LONG_MAX_VAL > 0L)
                 assert(ancientTime > 0L)
-                assert(MIN_VALUE < 0L)
-                assert(MAX_VALUE > 0L)
+                assert(Constants.LONG_MIN_VAL < 0L)
             }
             catch (err: AssertionError){
                 println(err.message)
+                print("very big problem")
             }
-            val deltaAfter : Long = recentTime - MIN_VALUE
-            val deltaBefore : Long = MAX_VALUE - ancientTime
-            return deltaAfter + deltaBefore
+            val sumNewTimeMaxVal : Long = recentTime + Constants.LONG_MAX_VAL
+            val sumMinValPrevTime : Long = Constants.LONG_MIN_VAL + ancientTime
+            val diff = sumNewTimeMaxVal - sumMinValPrevTime
+            if (diff < 0){
+                // overflow happened anyways, cannot be avoided sadly (?)
+                return Constants.LONG_MAX_VAL
+            }
+            return diff
         }
     }
 
