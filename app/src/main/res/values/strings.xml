@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">FallenPersonDetection</string>
+    <string name="app_title">Fallen Person Detection</string>
+    <string name="fall_detection">FALL DETECTION</string>
+    <string name="emergency_call">EMERGENCY CALL</string>
+    <string name="stop_alarm">STOP ALARM</string>
 </resources>
