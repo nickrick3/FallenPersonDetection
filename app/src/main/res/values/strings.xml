@@ -4,4 +4,5 @@
     <string name="fall_detection">FALL DETECTION</string>
     <string name="emergency_call">EMERGENCY CALL</string>
     <string name="stop_alarm">STOP ALARM</string>
+    <string name="danger_image_description">DANGER DANGER</string>
 </resources>
