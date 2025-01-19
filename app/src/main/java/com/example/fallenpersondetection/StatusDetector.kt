@@ -66,8 +66,10 @@ class StatusDetector(
     }
 
     private fun testTh3Z() : Boolean{
-        // this test does not use the absolute values of z , but the signed values !!!
-        return ( zSignMean < Constants.THRESHOLD_3)
+        // this test does not use the absolute values of z , but the signed last value !!!
+        // return ( zSignMean < Constants.THRESHOLD_3)
+        val zLastAcc : Double = accArrZ.last()
+        return ( zLastAcc < Constants.THRESHOLD_3 )
     }
 
     fun evaluate(): Constants.FallState {
@@ -77,32 +79,41 @@ class StatusDetector(
             return Constants.FallState.UndefinedError
         }
         if ( !testTh1SMA() ){
-            // target hs not fallen, it was a motionless analysis
+            // low movement overall
+            // target hs not fallen, it was a motionless analysis : NO MOTION
             return Constants.FallState.NoFallMotionlessAct
-        }
-        if ( testTh2X() ){
-            // if testTh2_X then target has fallen laterally
-            trgHasFallen()
-            return Constants.FallState.LateralFall
-        }
-        // TODO
-        // fix these tests they are weird ( not clear in the paper tbh )
-        if (testTh2Z()){
-            // now we know target has fallen forwards/backwards
-            if (testTh3Z()){
-                // if testTh3_Z surely has fallen forwards
-                trgHasFallen()
-                return Constants.FallState.ForwardsFall
-            }else{
-                // else has fallen backwards
-                trgHasFallen()
-                return Constants.FallState.BackwardsFall
-            }
         }else{
-            return Constants.FallState.OtherMotionAct
+            // we are moving
+            if ( testTh2X() ){
+                // XXX : high movement on X-axis :
+                // target has FALLEN laterally : RIGHT / LEFT
+                trgHasFallen()
+                return Constants.FallState.LateralFall
+            }else{
+                if ( ! testTh2Z() ){
+                    // then we are just randomly moving (maybe Y-axis?)
+                    return Constants.FallState.OtherMotionAct
+                }
+                else  {
+                    // ZZZ : high movement on Z-axis
+                    if (testTh3Z()) {
+                        // target surely has FALLEN FORWARDS
+                        trgHasFallen()
+                        return Constants.FallState.ForwardsFall
+                    } else {
+                        // TODO : better false positive than missing backwards fall imo
+                        // COULD BE BACKWARDS FALL
+                        // or could be jump / lie_down / sit_down ... idk :/
+                        // i would call alarm since might be backwards fall .
+                        trgHasFallen()
+                        return Constants.FallState.BackwardsFall
+                        // return Constants.FallState.ZMotionJumpLieSit
+                    }
+                }
+            }
         }
-
     }
+
 
     private fun trgHasFallen(){
         print("sad")

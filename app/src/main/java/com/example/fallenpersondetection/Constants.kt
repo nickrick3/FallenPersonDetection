@@ -18,10 +18,11 @@ object Constants {
 
     enum class FallState{
         NoFallMotionlessAct,
+        OtherMotionAct,
         LateralFall,
         BackwardsFall,
         ForwardsFall,
-        OtherMotionAct,
+        ZMotionJumpLieSit,
         UndefinedError
     }
 

@@ -112,8 +112,6 @@ class Accelerometer : Activity(), SensorEventListener {
         popLastUntilLen(accArrY, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
         popLastUntilLen(accArrZ, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
 
-        // TODO
-        // if needed, trigger events.
         val triggerEvaluator = StatusDetector(
             accArrX,
             accArrY,
