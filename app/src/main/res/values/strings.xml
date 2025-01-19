@@ -5,4 +5,5 @@
     <string name="emergency_call">EMERGENCY CALL</string>
     <string name="stop_alarm">STOP ALARM</string>
     <string name="danger_image_description">DANGER DANGER</string>
+    <string name="permission_granted">User has granted permission to start the application automatically</string>
 </resources>
