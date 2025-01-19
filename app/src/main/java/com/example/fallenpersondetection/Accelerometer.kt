@@ -1,33 +1,54 @@
 package com.example.fallenpersondetection
 
-import android.app.Activity
+import android.app.Service
+import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.os.IBinder
 import android.util.Log
 import kotlin.math.*
 
 
-class Accelerometer : Activity(), SensorEventListener {
-    private val mSensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-    private val mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+class Accelerometer : Service(), SensorEventListener {
+    // lets the main activity know if the service is already running
+    companion object {
+        var running = false
+    }
     private val aTAG: String = Accelerometer::class.simpleName.toString()
 
-
-    override fun onResume() {
-        super.onResume()
+    override fun onCreate() {
+        super.onCreate()
+        // register sensor listener
+        val mSensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        val mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME)
+        Log.i(aTAG, "onCreate")
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        running = true
+        Log.i(aTAG, "onStartCommand")
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        val mSensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         mSensorManager.unregisterListener(this)
+        running = false
+        Log.i(aTAG, "onDestroy")
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        // binding is not needed
+        return null
     }
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
         if(Sensor.TYPE_LINEAR_ACCELERATION == sensor.type){
-            Log.println(Log.INFO, aTAG,"Accuracy of our accelerometer has changed to : $accuracy")
+            Log.i(aTAG,"Accuracy of our accelerometer has changed to : $accuracy")
         }
     }
 
@@ -67,6 +88,9 @@ class Accelerometer : Activity(), SensorEventListener {
     // Accelerometer sampling is quite irregular, so we need to normalize values over the available sample time deltas
     @Throws(Exception::class)
     private fun updateArrays(newAccTime:Long, newAccX:Double, newAccY:Double, newAccZ:Double){
+        // DEBUG
+        //Log.i(aTAG, "received update")
+
         // the first time, we don't change the arrays, but only set the "prevAcc..." values !
         // all the other times, we expand the arrays properly
         if(prevAccTime == 0L){
