@@ -7,7 +7,7 @@ class StatusDetector(
     aArrX: ArrayDeque<Double>,
     aArrY: ArrayDeque<Double>,
     aArrZ: ArrayDeque<Double>
-) : Activity() {
+) {
     private val accArrX: ArrayDeque<Double> = aArrX
     private val accArrY: ArrayDeque<Double> = aArrY
     private val accArrZ: ArrayDeque<Double> = aArrZ
@@ -101,7 +101,6 @@ class StatusDetector(
                         trgHasFallen()
                         return Constants.FallState.ForwardsFall
                     } else {
-                        // TODO : better false positive than missing backwards fall imo
                         // COULD BE BACKWARDS FALL
                         // or could be jump / lie_down / sit_down ... idk :/
                         // i would call alarm since might be backwards fall .
@@ -115,8 +114,10 @@ class StatusDetector(
     }
 
 
+
     private fun trgHasFallen(){
         print("sad")
+        // make noise
     }
 
     private fun sumAbsOfADQ(trgList : ArrayDeque<Double>) : Double{
