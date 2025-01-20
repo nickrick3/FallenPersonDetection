@@ -6,7 +6,10 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.os.Handler
+import android.os.HandlerThread
 import android.os.IBinder
+import android.os.Process
 import android.util.Log
 import kotlin.math.*
 
@@ -16,28 +19,55 @@ class Accelerometer : Service(), SensorEventListener {
     companion object {
         var running = false
     }
+    private lateinit var mSensorThread : HandlerThread
+    private lateinit var mHandler: Handler
     private val aTAG: String = Accelerometer::class.simpleName.toString()
 
     override fun onCreate() {
         super.onCreate()
-        // register sensor listener
+
+        // start handler thread
+        mSensorThread = HandlerThread("Sensor Thread", Process.THREAD_PRIORITY_MORE_FAVORABLE)
+        mSensorThread.start()
+        mHandler = Handler(mSensorThread.looper)
+
+        // register sensor listener in handler thread
         val mSensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         val mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME)
+        mSensorManager.registerListener(
+            this,
+            mAccelerometer,
+            SensorManager.SENSOR_DELAY_GAME,
+            mHandler)
+
+        // service is up
+        running = true
+
+        // DEBUG
         Log.i(aTAG, "onCreate")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        running = true
+        // DEBUG
         Log.i(aTAG, "onStartCommand")
+
+        // service is not shut down after app is closed
         return START_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
+
+        // stop listener
         val mSensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         mSensorManager.unregisterListener(this)
+
+        // stop handler thread
+        mSensorThread.quitSafely()
+
         running = false
+
+        // DEBUG
         Log.i(aTAG, "onDestroy")
     }
 
