@@ -1,6 +1,5 @@
 package com.example.fallenpersondetection
 
-import android.app.Activity
 import kotlin.math.abs
 
 class StatusDetector(
@@ -32,8 +31,8 @@ class StatusDetector(
 
         // # setup SMA -----------------------------------
         minArrLength = minOf(arrLenX, arrLenY, arrLenZ)
-        print("operating with minArrLen = $minArrLength")
-        if (minArrLength <= 0){
+        print("ExtractFeatures : operating with minArrLen = $minArrLength \n")
+        if (minArrLength < 0){
             errorsCount++
             return false
         }
@@ -43,6 +42,7 @@ class StatusDetector(
         // var lastAccZ = accArrZ.takeLast(sma_max_iteration)
         val smaSum = sumAbsOfADQ(accArrX) + sumAbsOfADQ(accArrY) + sumAbsOfADQ(accArrZ)
         SMA = smaSum / smaMaxIteration.toDouble()
+        print("smaSum : $SMA")
 
         // # setup xAbsMean, yAbsMean, zAbsMean -----------------------------------
         xAbsMean = getMeanOfADQ(accArrX, useAbsVal = true)
@@ -50,6 +50,7 @@ class StatusDetector(
         zAbsMean = getMeanOfADQ(accArrZ, useAbsVal = true)
         zSignMean = getMeanOfADQ(accArrZ, useAbsVal = false)
 
+        print(" end of ExtractFeatures true \n")
         return true
     }
 
@@ -75,28 +76,32 @@ class StatusDetector(
     fun evaluate(): Constants.FallState {
         if ( !extractFeatures() ){
             // some weird problem during parameters calculations
-            print("How Did We Get Here?")
+            print("evaluate _ How Did We Get Here? : extractFeatures failed \n")
             return Constants.FallState.UndefinedError
         }
-        if ( !testTh1SMA() ){
+        val testTh1SMAresult = testTh1SMA()
+        if ( !testTh1SMAresult ){
             // low movement overall
             // target hs not fallen, it was a motionless analysis : NO MOTION
             return Constants.FallState.NoFallMotionlessAct
         }else{
             // we are moving
-            if ( testTh2X() ){
+            val testTh2Xresult = testTh2X()
+            if ( testTh2Xresult ){
                 // XXX : high movement on X-axis :
                 // target has FALLEN laterally : RIGHT / LEFT
                 trgHasFallen()
                 return Constants.FallState.LateralFall
             }else{
-                if ( ! testTh2Z() ){
+                val testTh2Zresult = testTh2Z()
+                if ( ! testTh2Zresult ){
                     // then we are just randomly moving (maybe Y-axis?)
                     return Constants.FallState.OtherMotionAct
                 }
                 else  {
                     // ZZZ : high movement on Z-axis
-                    if (testTh3Z()) {
+                    val testTh3Zresult = testTh3Z()
+                    if ( testTh3Zresult ) {
                         // target surely has FALLEN FORWARDS
                         trgHasFallen()
                         return Constants.FallState.ForwardsFall
@@ -121,33 +126,37 @@ class StatusDetector(
     }
 
     private fun sumAbsOfADQ(trgList : ArrayDeque<Double>) : Double{
-        var i = 0
+        print("begin sumAbsOfADQ \n ")
         val trgLen = trgList.size
-        var sum = 0.0
-        while (i<trgLen && !trgList[i].isNaN() ){
-            sum += abs(trgList[i])
-            i++
+        if (trgLen == 0){
+            return 0.0
+        }else{
+            var i = 0
+            var sum = 0.0
+            print(" _ trying to sumAbsOfADQ ")
+            while (i < trgLen ){
+                sum += abs(trgList[i])
+                i++
+            }
+            print(" _ out of while")
+
+            if (sum < 0.0 ){
+                // sum overflow could happen
+                print("overflow or smt \n")
+                errorsCount ++
+                return Constants.DOUBLE_MAX_VAL
+            }
+            return sum
         }
-        if (trgList[i].isNaN()){
-            print("very weird error")
-            errorsCount ++
-        }
-        if (sum < 0.0 ){
-            // sum overflow could happen
-            print("overflow or smt")
-            errorsCount ++
-            return Constants.DOUBLE_MAX_VAL
-        }
-        return sum
     }
 
     private fun getMeanOfADQ(trgList : ArrayDeque<Double>, useAbsVal : Boolean) : Double{
         val defaultMin = 0.0
         val defaultMax : Double = Constants.DOUBLE_MAX_VAL
         val trgSize = trgList.size
-        if (trgSize <=0){
+        if (trgSize < 0){
             // should never happen
-            print("How Did We Get Here?")
+            print("getMeanOfADQ _ How Did We Get Here? \n")
             errorsCount ++
             return defaultMin
         }

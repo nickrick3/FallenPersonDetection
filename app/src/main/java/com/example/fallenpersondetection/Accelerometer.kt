@@ -75,11 +75,12 @@ class Accelerometer : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent) {
         if(event.sensor?.type == Sensor.TYPE_LINEAR_ACCELERATION){
             // val stdGravity = SensorManager.STANDARD_GRAVITY
-            // timestamp gives nanoseconds
-            val sChangeTime: Long = event.timestamp / 1000
+            // timestamp gives nanoseconds, we use milliseconds -> 10^6 difference
+            val sChangeTime: Long = event.timestamp / 1000000
             val sChangeX = event.values[0].toDouble()
             val sChangeY = event.values[1].toDouble()
             val sChangeZ = event.values[2].toDouble()
+            print("DBG _ received values : $sChangeX _ $sChangeY _ $sChangeZ \n")
             updateArrays(sChangeTime, sChangeX, sChangeY, sChangeZ)
         }
         return
@@ -100,11 +101,14 @@ class Accelerometer : Service(), SensorEventListener {
             // at every step, check if any trigger should be triggered
             while (calcTime < newAccTime){
                 val interimAccX = linearize( prevAccTime, prevAccX, newAccTime, newAccX, calcTime)
-                val interimAccY = linearize( prevAccTime, prevAccY, newAccTime, newAccY, calcTime)
-                val interimAccZ = linearize( prevAccTime, prevAccZ, newAccTime, newAccZ, calcTime)
                 accArrX.addFirst(interimAccX)
-                accArrX.addFirst(interimAccY)
-                accArrX.addFirst(interimAccZ)
+
+                val interimAccY = linearize( prevAccTime, prevAccY, newAccTime, newAccY, calcTime)
+                accArrY.addFirst(interimAccY)
+
+                val interimAccZ = linearize( prevAccTime, prevAccZ, newAccTime, newAccZ, calcTime)
+                accArrZ.addFirst(interimAccZ)
+
                 // assert(accArrX.size == accArrY.size && accArrX.size== accArrZ.size )
                 calcTime += Constants.ACCELEROMETER_TIME_DELTA_MS
                 checkTriggers()
@@ -127,7 +131,7 @@ class Accelerometer : Service(), SensorEventListener {
             assert(arrLenX == arrLenZ)
         }
         catch (err: AssertionError){
-            println(err.message)
+            println("_ checkTriggers assertion : ${err.message} , xSize : $arrLenX ; ySize : $arrLenY ; zSize : $arrLenZ ;   \n")
         }
         // val justPoppedAccX: Double? = popLastUntilLen(accArrX, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
         // val justPoppedAccY: Double? = popLastUntilLen(accArrY, Constants.NUMBER_CONSECUTIVE_SAMPLES_TRG)
@@ -142,7 +146,7 @@ class Accelerometer : Service(), SensorEventListener {
             accArrZ
         )
         val evaluationResult : Constants.FallState = triggerEvaluator.evaluate()
-        print(evaluationResult)
+        print(" !!! _ _ _ results : $evaluationResult \n")
         return
     }
 
@@ -166,15 +170,20 @@ class Accelerometer : Service(), SensorEventListener {
         // //               -> == { oV(nT-oT) + nVtT-oVtT -nVoT + oVoT } / (nT-oT)
         // //               -> == oV + (nV-oV)(tT-oT)/(nT-oT)
         // val deltaTime : newTime-prevTime
-        val deltaNewTimOldTim : Double = timeDiffs(prevTime, newTime).toDouble()
         val deltaTrgTimOldTim : Double = timeDiffs(prevTime, trgTime).toDouble()
-        return prevTime + (newValue - prevValue)*(deltaTrgTimOldTim)/(deltaNewTimOldTim)
+        val deltaNewTimOldTim : Double = timeDiffs(prevTime, newTime).toDouble()
+        val newVal =  prevValue + (newValue - prevValue)*(deltaTrgTimOldTim)/(deltaNewTimOldTim)
+        print("ciao")
+        if (abs(newVal) > 100){
+            print("!!!!!!!! _ BIG NUMBER ERROR \n\n")
+        }
+        return newVal
     }
 
     @Throws(Exception::class)
     private fun timeDiffs( ancientTime: Long, recentTime: Long ) : Long{
         // return recentTime - ancientTime
-        if (recentTime > ancientTime){
+        if (recentTime >= ancientTime){
             return recentTime-ancientTime
         }else{
             // // newTime(negative) - minTime( -2^-63) + maxTime(2^63 -1) - prevTime(positive)
@@ -188,7 +197,7 @@ class Accelerometer : Service(), SensorEventListener {
             }
             catch (err: AssertionError){
                 println(err.message)
-                print("very big problem")
+                print("timeDiffs assert : ${err.message} , recT : $recentTime _ ancT : $ancientTime \n")
             }
             val sumNewTimeMaxVal : Long = recentTime + Constants.LONG_MAX_VAL
             val sumMinValPrevTime : Long = Constants.LONG_MIN_VAL + ancientTime
