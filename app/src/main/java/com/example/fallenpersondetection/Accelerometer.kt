@@ -193,9 +193,9 @@ class Accelerometer : Service(), SensorEventListener {
         }
 
         // DEBUG:
-        Thread.sleep(5000)
-        stopListening()
-        sendAlert()
+        //Thread.sleep(5000)
+        //stopListening()
+        //sendAlert()
 
         // DEBUG:
         Log.d(aTAG," !!! _ _ _ results : $evaluationResult \n")

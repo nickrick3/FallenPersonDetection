@@ -1,5 +1,6 @@
 package com.example.fallenpersondetection
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -14,15 +15,16 @@ import android.widget.CompoundButton
 import android.widget.CompoundButton.OnCheckedChangeListener
 import android.widget.Switch
 import android.widget.TextView
-import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
 
-class MainActivity : ComponentActivity(), OnCheckedChangeListener, OnClickListener{
+class MainActivity : Activity(), OnCheckedChangeListener, OnClickListener{
     private lateinit var mAlarmReceiver: AlarmReceiver
-    private var fallDetected : Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        setTurnScreenOn(true)
+        setShowWhenLocked(true)
 
         // alarm broadcast listener
         mAlarmReceiver = AlarmReceiver()
@@ -35,9 +37,6 @@ class MainActivity : ComponentActivity(), OnCheckedChangeListener, OnClickListen
 
         // set view
         setContentView(R.layout.activity_main)
-        val detectionSwitch : Switch = findViewById(R.id.detectionSwitch)
-        detectionSwitch.isChecked = Accelerometer.running
-        detectionSwitch.setOnCheckedChangeListener(this)
     }
 
     override fun onResume() {
@@ -46,6 +45,9 @@ class MainActivity : ComponentActivity(), OnCheckedChangeListener, OnClickListen
             val tw : TextView = findViewById(R.id.permissionGranted)
             tw.visibility = View.VISIBLE
         }
+        val detectionSwitch : Switch = findViewById(R.id.detectionSwitch)
+        detectionSwitch.isChecked = Accelerometer.running
+        detectionSwitch.setOnCheckedChangeListener(this)
     }
 
     override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
@@ -87,7 +89,7 @@ class MainActivity : ComponentActivity(), OnCheckedChangeListener, OnClickListen
         unregisterReceiver(mAlarmReceiver)
     }
 
-    private class AlarmReceiver : BroadcastReceiver() {
+    private class AlarmReceiver () : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (!AlarmActivity.active) {
                 AlarmActivity.active = true
