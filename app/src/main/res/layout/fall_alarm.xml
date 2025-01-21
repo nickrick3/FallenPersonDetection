@@ -22,12 +22,13 @@
 
     <ImageView
         android:id="@+id/dangerImage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="188dp"
+        android:layout_width="392dp"
+        android:layout_height="181dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="192dp"
         android:adjustViewBounds="true"
-        android:padding="20dp"
         android:contentDescription="@string/danger_image_description"
+        android:padding="20dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/titleView"
         tools:src="@drawable/danger_sign" />
@@ -36,7 +37,7 @@
         android:id="@+id/stopButton"
         android:layout_width="198dp"
         android:layout_height="81dp"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="84dp"
         android:background="@color/red"
         android:onClick="stopAlarm"
         android:text="@string/stop_alarm"
