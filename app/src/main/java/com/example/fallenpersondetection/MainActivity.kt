@@ -1,9 +1,12 @@
 package com.example.fallenpersondetection
 
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.DialogInterface
 import android.content.DialogInterface.OnClickListener
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
@@ -12,11 +15,23 @@ import android.widget.CompoundButton.OnCheckedChangeListener
 import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity(), OnCheckedChangeListener, OnClickListener{
+    private lateinit var mAlarmReceiver: AlarmReceiver
+    private var fallDetected : Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // alarm broadcast listener
+        mAlarmReceiver = AlarmReceiver()
+        ContextCompat.registerReceiver(
+            this,
+            mAlarmReceiver,
+            IntentFilter("FALL_DETECTED"),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
 
         // set view
         setContentView(R.layout.activity_main)
@@ -67,4 +82,18 @@ class MainActivity : ComponentActivity(), OnCheckedChangeListener, OnClickListen
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(mAlarmReceiver)
+    }
+
+    private class AlarmReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (!AlarmActivity.active) {
+                AlarmActivity.active = true
+                val alarmActivity = Intent(context, AlarmActivity::class.java)
+                context?.startActivity(alarmActivity)
+            }
+        }
+    }
 }

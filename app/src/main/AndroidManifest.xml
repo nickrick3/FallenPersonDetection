@@ -20,7 +20,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="FALL_DETECTED" />
+            </intent-filter>
         </activity>
+
+        <activity android:name=".AlarmActivity"
+            android:theme="@style/Theme.FallenPersonDetection">
+        </activity>
+
         <service
             android:name=".Accelerometer"
             android:enabled="true">

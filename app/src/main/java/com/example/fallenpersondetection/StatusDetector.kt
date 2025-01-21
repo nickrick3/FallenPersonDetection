@@ -1,5 +1,6 @@
 package com.example.fallenpersondetection
 
+import android.util.Log
 import kotlin.math.abs
 
 class StatusDetector(
@@ -27,11 +28,14 @@ class StatusDetector(
     // overflow and errors counter
     private var errorsCount = 0
 
+    // DEBUG
+    private val sTAG: String = StatusDetector::class.simpleName.toString()
+
     private fun extractFeatures() : Boolean {
 
         // # setup SMA -----------------------------------
         minArrLength = minOf(arrLenX, arrLenY, arrLenZ)
-        print("ExtractFeatures : operating with minArrLen = $minArrLength \n")
+        // DEBUG: print("ExtractFeatures : operating with minArrLen = $minArrLength \n")
         if (minArrLength < 0){
             errorsCount++
             return false
@@ -42,7 +46,7 @@ class StatusDetector(
         // var lastAccZ = accArrZ.takeLast(sma_max_iteration)
         val smaSum = sumAbsOfADQ(accArrX) + sumAbsOfADQ(accArrY) + sumAbsOfADQ(accArrZ)
         SMA = smaSum / smaMaxIteration.toDouble()
-        print("smaSum : $SMA")
+        // DEBUG: print("smaSum : $SMA")
 
         // # setup xAbsMean, yAbsMean, zAbsMean -----------------------------------
         xAbsMean = getMeanOfADQ(accArrX, useAbsVal = true)
@@ -50,7 +54,7 @@ class StatusDetector(
         zAbsMean = getMeanOfADQ(accArrZ, useAbsVal = true)
         zSignMean = getMeanOfADQ(accArrZ, useAbsVal = false)
 
-        print(" end of ExtractFeatures true \n")
+        // DEBUG: print(" end of ExtractFeatures true \n")
         return true
     }
 
@@ -76,7 +80,7 @@ class StatusDetector(
     fun evaluate(): Constants.FallState {
         if ( !extractFeatures() ){
             // some weird problem during parameters calculations
-            print("evaluate _ How Did We Get Here? : extractFeatures failed \n")
+            // DEBUG: print("evaluate _ How Did We Get Here? : extractFeatures failed \n")
             return Constants.FallState.UndefinedError
         }
         val testTh1SMAresult = testTh1SMA()
@@ -90,7 +94,6 @@ class StatusDetector(
             if ( testTh2Xresult ){
                 // XXX : high movement on X-axis :
                 // target has FALLEN laterally : RIGHT / LEFT
-                trgHasFallen()
                 return Constants.FallState.LateralFall
             }else{
                 val testTh2Zresult = testTh2Z()
@@ -103,13 +106,11 @@ class StatusDetector(
                     val testTh3Zresult = testTh3Z()
                     if ( testTh3Zresult ) {
                         // target surely has FALLEN FORWARDS
-                        trgHasFallen()
                         return Constants.FallState.ForwardsFall
                     } else {
                         // COULD BE BACKWARDS FALL
                         // or could be jump / lie_down / sit_down ... idk :/
                         // i would call alarm since might be backwards fall .
-                        trgHasFallen()
                         return Constants.FallState.BackwardsFall
                         // return Constants.FallState.ZMotionJumpLieSit
                     }
@@ -118,31 +119,24 @@ class StatusDetector(
         }
     }
 
-
-
-    private fun trgHasFallen(){
-        print("sad")
-        // make noise
-    }
-
     private fun sumAbsOfADQ(trgList : ArrayDeque<Double>) : Double{
-        print("begin sumAbsOfADQ \n ")
+        // DEBUG: print("begin sumAbsOfADQ \n ")
         val trgLen = trgList.size
         if (trgLen == 0){
             return 0.0
         }else{
             var i = 0
             var sum = 0.0
-            print(" _ trying to sumAbsOfADQ ")
+            // DEBUG: print(" _ trying to sumAbsOfADQ ")
             while (i < trgLen ){
                 sum += abs(trgList[i])
                 i++
             }
-            print(" _ out of while")
+            // DEBUG: print(" _ out of while")
 
             if (sum < 0.0 ){
                 // sum overflow could happen
-                print("overflow or smt \n")
+                // DEBUG: print("overflow or smt \n")
                 errorsCount ++
                 return Constants.DOUBLE_MAX_VAL
             }
@@ -156,14 +150,14 @@ class StatusDetector(
         val trgSize = trgList.size
         if (trgSize < 0){
             // should never happen
-            print("getMeanOfADQ _ How Did We Get Here? \n")
+            // DEBUG: print("getMeanOfADQ _ How Did We Get Here? \n")
             errorsCount ++
             return defaultMin
         }
         val trgSum = if(useAbsVal) sumAbsOfADQ(trgList) else trgList.sum()
         if (trgSum < 0.0 ){
             // sum overflow could happen
-            print("overflow or smt")
+            // DEBUG: print("overflow or smt")
             errorsCount ++
             return defaultMax
         }
