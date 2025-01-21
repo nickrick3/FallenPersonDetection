@@ -13,9 +13,15 @@ class AlarmActivity: ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.fall_alarm)
-        setShowWhenLocked(true)
 
+        // set view
+        setContentView(R.layout.fall_alarm)
+
+        // useful for full screen intent
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
+
+        // set maximum volume (and store old value)
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         oldVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         audioManager.setStreamVolume(
@@ -24,6 +30,7 @@ class AlarmActivity: ComponentActivity() {
             0
         )
 
+        // create looping media player
         alarm = MediaPlayer.create(this, R.raw.alarm)
         alarm.isLooping = true
         alarm.start()
@@ -32,11 +39,11 @@ class AlarmActivity: ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
+        // stop media player
         alarm.stop()
         alarm.release()
 
-        AccelerometerService.alarmStarted = false
-
+        // restore old volume level
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         audioManager.setStreamVolume(
             AudioManager.STREAM_MUSIC,
@@ -44,10 +51,15 @@ class AlarmActivity: ComponentActivity() {
             0
         )
 
+        // dismiss notification from notification bar
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(Constants.NOTIFICATION_ID)
+
+        // notify end of alarm
+        AccelerometerService.alarmStarted = false
     }
 
+    // function used by the button
     fun stopAlarm(v: View) {
         finish()
     }

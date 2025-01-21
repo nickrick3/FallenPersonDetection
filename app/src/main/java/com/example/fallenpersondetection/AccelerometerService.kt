@@ -24,9 +24,10 @@ import kotlin.math.*
 
 
 class AccelerometerService : Service(), SensorEventListener {
-    // lets the main activity know if the service is already running
     companion object {
+        // lets the main activity know if the service is already running
         var running = false
+        // avoid sending multiple notifications
         var alarmStarted = false
     }
 
@@ -70,18 +71,20 @@ class AccelerometerService : Service(), SensorEventListener {
         alarmStarted = false
 
         // DEBUG
-        Log.i(aTAG, "onCreate")
+        // Log.i(aTAG, "onCreate")
     }
 
+    /*
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // DEBUG
-        Log.i(aTAG, "onStartCommand")
-
-        // service is not shut down after app is closed
+        // Log.i(aTAG, "onStartCommand")
         return START_STICKY
     }
+    */
 
-    private fun stopListening() {
+    override fun onDestroy() {
+        super.onDestroy()
+
         // stop listener
         val mSensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         mSensorManager.unregisterListener(this)
@@ -89,16 +92,11 @@ class AccelerometerService : Service(), SensorEventListener {
         // stop handler thread
         mSensorThread.quitSafely()
 
-        running = false
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (running)
-            stopListening()
-
+        // delete channel
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.deleteNotificationChannel(Constants.CHANNEL_ID)
+
+        running = false
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -218,11 +216,6 @@ class AccelerometerService : Service(), SensorEventListener {
         }
 
         // DEBUG:
-        // Thread.sleep(5000)
-        // stopListening()
-        // sendAlert()
-
-        // DEBUG:
         Log.d(aTAG," !!! _ _ _ results : $evaluationResult \n")
         return
     }
@@ -286,7 +279,9 @@ class AccelerometerService : Service(), SensorEventListener {
         }
     }
 
+    // send alert if a fall is detected
     private fun sendAlert() {
+        // set up full screen intent
         val fullScreenIntent = Intent(applicationContext, AlarmActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             applicationContext,
@@ -295,6 +290,7 @@ class AccelerometerService : Service(), SensorEventListener {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // set up notification
         val nBuilder = NotificationCompat.Builder(applicationContext, Constants.CHANNEL_ID)
             .setSmallIcon(R.mipmap.danger_sym)
             .setContentTitle("Fall Notification")
@@ -305,13 +301,21 @@ class AccelerometerService : Service(), SensorEventListener {
             .setAutoCancel(true)
             .setFullScreenIntent(pendingIntent, true)
 
+        // send notification
         with(NotificationManagerCompat.from(this)) {
-            if (ActivityCompat.checkSelfPermission(
+            if ((ActivityCompat.checkSelfPermission(
                     applicationContext,
                     Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
+                ) != PackageManager.PERMISSION_GRANTED)
+                or
+                (ActivityCompat.checkSelfPermission(
+                    applicationContext,
+                    Manifest.permission.USE_FULL_SCREEN_INTENT
+                ) != PackageManager.PERMISSION_GRANTED)
             ) {
-                Log.e(aTAG, "PERMISSION DENIED")
+                // this should not happens since permissions must have been granted
+                // to start this service
+                Log.e(aTAG, "ERROR: PERMISSION DENIED")
                 return@with
             }
             notify(Constants.NOTIFICATION_ID, nBuilder.build())
