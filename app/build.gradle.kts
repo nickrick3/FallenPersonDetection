@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.fallenpersondetection"
-        minSdk = 27
+        minSdkVersion(rootProject.extra["defaultMinSdkVersion"] as Int)
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"

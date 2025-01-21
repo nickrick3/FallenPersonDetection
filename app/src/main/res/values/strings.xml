@@ -8,4 +8,12 @@
     
     <string name="channel_name">FALL_DETECTION_CHANNEL</string>
     <string name="channel_description">Notification channel for urgent alarms when a fall is detected</string>
+    <string name="fdp_description">When toggled, this application will receive data from the accelerometer in your mobile device, and detect a possible fall. \n\n
+                                    In case of detected fall, the application will start making a loud sound, so that anybody close to you can come help ! :-) \n\n
+                                    We want to make sure that nobody gets hurt, so please follow some simple steps in order to improve our detection ability : \n\n
+                                    - if you want our app to work, the toggle above needs to be activated \n
+                                    - when you are not using your phone, turn it off and place it in your pocket \n
+                                    - inform anybody that can help you that this feature is on, so they can keep an ear out and come promptly ! \n
+                                    - make sure that your phone is properly charged at any time\n\n
+                                    Thank you for helping us help you :-)</string>
 </resources>

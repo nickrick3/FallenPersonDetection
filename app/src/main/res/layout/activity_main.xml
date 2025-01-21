@@ -9,8 +9,8 @@
 
     <TextView
         android:id="@+id/titleView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="409dp"
+        android:layout_height="56dp"
         android:background="@color/teal_700"
         android:padding="8dp"
         android:text="@string/app_title"
@@ -23,7 +23,7 @@
         android:id="@+id/detectionSwitch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="104dp"
         android:padding="12dp"
         android:text="@string/fall_detection"
         android:textSize="18sp"
@@ -34,13 +34,29 @@
         android:id="@+id/permissionGranted"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/permission_granted"
-        android:textSize="20sp"
+        android:layout_marginBottom="50dp"
         android:padding="4dp"
+        android:text="@string/permission_granted"
         android:textAlignment="center"
+        android:textSize="20sp"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="405dp"
+        android:layout_height="380dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:layout_marginTop="250dp"
+        android:text="@string/fdp_description"
+        tools:layout_editor_absoluteX="3dp"
+        tools:layout_editor_absoluteY="259dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
