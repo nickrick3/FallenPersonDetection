@@ -1,5 +1,6 @@
 package com.example.fallenpersondetection
 
+import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.BroadcastReceiver
@@ -8,6 +9,8 @@ import android.content.DialogInterface
 import android.content.DialogInterface.OnClickListener
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
@@ -17,8 +20,8 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 
-class MainActivity : Activity(), OnCheckedChangeListener, OnClickListener{
-    private lateinit var mAlarmReceiver: AlarmReceiver
+class MainActivity : Activity(), OnCheckedChangeListener /*, OnClickListener*/ {
+    //private lateinit var mAlarmReceiver: AlarmReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +29,7 @@ class MainActivity : Activity(), OnCheckedChangeListener, OnClickListener{
         setTurnScreenOn(true)
         setShowWhenLocked(true)
 
+        /*
         // alarm broadcast listener
         mAlarmReceiver = AlarmReceiver()
         ContextCompat.registerReceiver(
@@ -35,13 +39,15 @@ class MainActivity : Activity(), OnCheckedChangeListener, OnClickListener{
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
 
+         */
+
         // set view
         setContentView(R.layout.activity_main)
     }
 
     override fun onResume() {
         super.onResume()
-        if (Settings.canDrawOverlays(this)) {
+        if (gotPermissions(doRequest = false)) {
             val tw : TextView = findViewById(R.id.permissionGranted)
             tw.visibility = View.VISIBLE
         }
@@ -54,7 +60,8 @@ class MainActivity : Activity(), OnCheckedChangeListener, OnClickListener{
         val intent = Intent(this, Accelerometer::class.java)
         if (isChecked) {
             // check if user has already given permission
-            if (Settings.canDrawOverlays(this)) {
+            if (gotPermissions(doRequest = true))
+            {
                 // start service
                 startService(intent)
             }
@@ -63,12 +70,14 @@ class MainActivity : Activity(), OnCheckedChangeListener, OnClickListener{
                 buttonView?.isChecked = false
 
                 // ask for permission
+                /*
                 AlertDialog.Builder(this)
                     .setMessage("This feature requires over lay permission")
                     .setPositiveButton("OK", this)
                     .setNegativeButton("Cancel", this)
                     .create()
                     .show()
+                 */
             }
         }
         else {
@@ -77,25 +86,68 @@ class MainActivity : Activity(), OnCheckedChangeListener, OnClickListener{
         }
     }
 
+    private fun gotPermissions(doRequest : Boolean) : Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+            return true
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.USE_FULL_SCREEN_INTENT)
+                        == PackageManager.PERMISSION_GRANTED)
+                return true
+
+            if (doRequest)
+                requestPermissions(
+                    arrayOf(Manifest.permission.USE_FULL_SCREEN_INTENT),
+                    0
+                )
+
+            return false
+        }
+
+        if ((ContextCompat.checkSelfPermission(this, Manifest.permission.USE_FULL_SCREEN_INTENT)
+                    == PackageManager.PERMISSION_GRANTED) and
+            (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED))
+            return true
+
+        if (doRequest)
+            requestPermissions(
+                arrayOf(
+                    Manifest.permission.USE_FULL_SCREEN_INTENT,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ),
+                0
+            )
+
+        return false
+    }
+
+    /*
     override fun onClick(dialog: DialogInterface?, which: Int) {
         if (which == DialogInterface.BUTTON_POSITIVE) {
             // go to settings
             startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
         }
     }
-
+     */
+    /*
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(mAlarmReceiver)
     }
 
+     */
+
+    /*
     private class AlarmReceiver () : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (!AlarmActivity.active) {
                 AlarmActivity.active = true
+
                 val alarmActivity = Intent(context, AlarmActivity::class.java)
                 context?.startActivity(alarmActivity)
             }
         }
     }
+    */
 }

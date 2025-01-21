@@ -1,7 +1,13 @@
 package com.example.fallenpersondetection
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -11,6 +17,10 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Process
 import android.util.Log
+import androidx.compose.animation.core.animateDecay
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import kotlin.math.*
 
 
@@ -18,6 +28,7 @@ class Accelerometer : Service(), SensorEventListener {
     // lets the main activity know if the service is already running
     companion object {
         var running = false
+        var alarmStarted = false
     }
 
     // thread handling
@@ -44,8 +55,20 @@ class Accelerometer : Service(), SensorEventListener {
             SensorManager.SENSOR_DELAY_GAME,
             mHandler)
 
+        // Create the NotificationChannel.
+        val name = getString(R.string.channel_name)
+        val descriptionText = getString(R.string.channel_description)
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val mChannel = NotificationChannel(Constants.CHANNEL_ID, name, importance)
+        mChannel.description = descriptionText
+
+        // Register the channel with the system.
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(mChannel)
+
         // service is up
         running = true
+        alarmStarted = false
 
         // DEBUG
         Log.i(aTAG, "onCreate")
@@ -74,8 +97,9 @@ class Accelerometer : Service(), SensorEventListener {
         super.onDestroy()
         if (running)
             stopListening()
-        // DEBUG
-        Log.d(aTAG, "onDestroy")
+
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.deleteNotificationChannel(Constants.CHANNEL_ID)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -184,18 +208,20 @@ class Accelerometer : Service(), SensorEventListener {
             accArrZ
         )
         val evaluationResult : Constants.FallState = triggerEvaluator.evaluate()
-        // DEBUG
+
         if (evaluationResult in listOf( Constants.FallState.LateralFall,
                                         Constants.FallState.ForwardsFall,
-                                        Constants.FallState.BackwardsFall))
-        {
-            sendAlert()
+                                        Constants.FallState.BackwardsFall)) {
+            if (!alarmStarted) {
+                alarmStarted = true
+                sendAlert()
+            }
         }
 
         // DEBUG:
-        //Thread.sleep(5000)
-        //stopListening()
-        //sendAlert()
+        // Thread.sleep(5000)
+        // stopListening()
+        // sendAlert()
 
         // DEBUG:
         Log.d(aTAG," !!! _ _ _ results : $evaluationResult \n")
@@ -262,6 +288,34 @@ class Accelerometer : Service(), SensorEventListener {
     }
 
     private fun sendAlert() {
-        sendBroadcast(Intent("FALL_DETECTED"))
+        val fullScreenIntent = Intent(applicationContext, AlarmActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            0,
+            fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val nBuilder = NotificationCompat.Builder(applicationContext, Constants.CHANNEL_ID)
+            .setSmallIcon(R.mipmap.danger_sym)
+            .setContentTitle("Fall Notification")
+            .setContentText("FALL DETECTED")
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setAutoCancel(true)
+            .setFullScreenIntent(pendingIntent, true)
+
+        with(NotificationManagerCompat.from(this)) {
+            if (ActivityCompat.checkSelfPermission(
+                    applicationContext,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.e(aTAG, "PERMISSION DENIED")
+                return@with
+            }
+            notify(Constants.NOTIFICATION_ID, nBuilder.build())
+        }
     }
 }

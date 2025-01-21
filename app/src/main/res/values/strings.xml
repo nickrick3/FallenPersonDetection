@@ -4,5 +4,8 @@
     <string name="fall_detection">FALL DETECTION</string>
     <string name="stop_alarm">STOP ALARM</string>
     <string name="danger_image_description">DANGER DANGER</string>
-    <string name="permission_granted">User has granted permission to start the application automatically</string>
+    <string name="permission_granted">User has granted permission to post full screen notifications</string>
+    
+    <string name="channel_name">FALL_DETECTION_CHANNEL</string>
+    <string name="channel_description">Notification channel for urgent alarms when a fall is detected</string>
 </resources>

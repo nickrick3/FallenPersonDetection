@@ -1,5 +1,6 @@
 package com.example.fallenpersondetection
 
+import android.app.NotificationManager
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -7,10 +8,6 @@ import android.view.View
 import androidx.activity.ComponentActivity
 
 class AlarmActivity: ComponentActivity() {
-    companion object {
-        var active : Boolean = false
-    }
-
     private lateinit var alarm : MediaPlayer
     private  var oldVolume : Int = 0
 
@@ -38,6 +35,8 @@ class AlarmActivity: ComponentActivity() {
         alarm.stop()
         alarm.release()
 
+        Accelerometer.alarmStarted = false
+
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         audioManager.setStreamVolume(
             AudioManager.STREAM_MUSIC,
@@ -45,7 +44,8 @@ class AlarmActivity: ComponentActivity() {
             0
         )
 
-        active = false
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(Constants.NOTIFICATION_ID)
     }
 
     fun stopAlarm(v: View) {

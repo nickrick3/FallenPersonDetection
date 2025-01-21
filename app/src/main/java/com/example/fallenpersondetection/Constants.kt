@@ -31,4 +31,8 @@ object Constants {
     const val DOUBLE_MAX_VAL : Double  = Double.MAX_VALUE
     // const val DOUBLE_MIN_VAL : Double = kotlin.Double.MIN_VALUE
 
+
+    // notification ids
+    const val NOTIFICATION_ID = 420
+    const val CHANNEL_ID : String = "my_channel_0"
 }
