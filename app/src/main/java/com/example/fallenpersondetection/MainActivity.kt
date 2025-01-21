@@ -2,17 +2,10 @@ package com.example.fallenpersondetection
 
 import android.Manifest
 import android.app.Activity
-import android.app.AlertDialog
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.DialogInterface
-import android.content.DialogInterface.OnClickListener
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.view.View
 import android.widget.CompoundButton
 import android.widget.CompoundButton.OnCheckedChangeListener
@@ -52,12 +45,12 @@ class MainActivity : Activity(), OnCheckedChangeListener /*, OnClickListener*/ {
             tw.visibility = View.VISIBLE
         }
         val detectionSwitch : Switch = findViewById(R.id.detectionSwitch)
-        detectionSwitch.isChecked = Accelerometer.running
+        detectionSwitch.isChecked = AccelerometerService.running
         detectionSwitch.setOnCheckedChangeListener(this)
     }
 
     override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
-        val intent = Intent(this, Accelerometer::class.java)
+        val intent = Intent(this, AccelerometerService::class.java)
         if (isChecked) {
             // check if user has already given permission
             if (gotPermissions(doRequest = true))

@@ -17,14 +17,13 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Process
 import android.util.Log
-import androidx.compose.animation.core.animateDecay
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import kotlin.math.*
 
 
-class Accelerometer : Service(), SensorEventListener {
+class AccelerometerService : Service(), SensorEventListener {
     // lets the main activity know if the service is already running
     companion object {
         var running = false
@@ -36,7 +35,7 @@ class Accelerometer : Service(), SensorEventListener {
     private lateinit var mHandler: Handler
 
     // tag for logging
-    private val aTAG: String = Accelerometer::class.simpleName.toString()
+    private val aTAG: String = AccelerometerService::class.simpleName.toString()
 
     override fun onCreate() {
         super.onCreate()

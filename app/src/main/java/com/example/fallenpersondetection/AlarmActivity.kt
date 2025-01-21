@@ -35,7 +35,7 @@ class AlarmActivity: ComponentActivity() {
         alarm.stop()
         alarm.release()
 
-        Accelerometer.alarmStarted = false
+        AccelerometerService.alarmStarted = false
 
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         audioManager.setStreamVolume(

@@ -34,7 +34,7 @@
         </activity>
 
         <service
-            android:name=".Accelerometer"
+            android:name=".AccelerometerService"
             android:enabled="true">
         </service>
     </application>
